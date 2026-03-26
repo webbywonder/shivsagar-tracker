@@ -17,14 +17,16 @@ class SheetSync {
 
   /**
    * Load data from Google Sheet, fallback to localStorage cache.
+   * Google Apps Script redirects GET — fetch follows automatically.
    * @returns {{ data: object|null, source: string }}
    */
   async load() {
     try {
       const url = `${this.scriptUrl}?action=read`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Sheet fetch failed");
-      const data = await res.json();
+      const res = await fetch(url, { redirect: "follow" });
+      const text = await res.text();
+      const data = JSON.parse(text);
+      if (data.error) throw new Error(data.error);
       localStorage.setItem(this.CACHE_KEY, JSON.stringify(data));
       localStorage.setItem(this.CACHE_TS_KEY, Date.now().toString());
       return { data, source: "sheet" };
@@ -36,6 +38,9 @@ class SheetSync {
 
   /**
    * Save data to Google Sheet + localStorage cache.
+   * Google Apps Script redirects POST (302) — fetch follows as GET and
+   * loses the body. The workaround is to send data as a URL-encoded
+   * GET parameter instead.
    * @param {object} data
    * @returns {{ success: boolean }}
    */
@@ -43,13 +48,12 @@ class SheetSync {
     localStorage.setItem(this.CACHE_KEY, JSON.stringify(data));
     localStorage.setItem(this.CACHE_TS_KEY, Date.now().toString());
     try {
-      const res = await fetch(this.scriptUrl, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({ action: "write", data }),
-      });
-      if (!res.ok) throw new Error("Sheet write failed");
-      const result = await res.json();
+      const payload = encodeURIComponent(JSON.stringify({ action: "write", data }));
+      const url = `${this.scriptUrl}?action=write&payload=${payload}`;
+      const res = await fetch(url, { redirect: "follow" });
+      const text = await res.text();
+      const result = JSON.parse(text);
+      if (result.error) throw new Error(result.error);
       return { success: true, result };
     } catch (err) {
       console.warn("Sheet write failed, saved locally:", err.message);

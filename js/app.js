@@ -94,6 +94,26 @@ function esc(str) {
 }
 
 // ============================================================
+// TOAST NOTIFICATIONS
+// ============================================================
+
+/** Show a brief toast message at the bottom of the screen. */
+function showToast(message, duration) {
+  duration = duration || 2500;
+  const existing = document.getElementById("toast");
+  if (existing) existing.remove();
+  const el = document.createElement("div");
+  el.id = "toast";
+  el.textContent = message;
+  el.style.cssText = "position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1c1917;color:#fff;padding:10px 20px;border-radius:12px;font-size:12px;font-weight:600;z-index:200;font-family:inherit;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:opacity 0.3s;";
+  document.body.appendChild(el);
+  setTimeout(() => {
+    el.style.opacity = "0";
+    setTimeout(() => el.remove(), 300);
+  }, duration);
+}
+
+// ============================================================
 // PERSISTENCE
 // ============================================================
 
@@ -564,16 +584,35 @@ window.openSettings = function () {
   render();
 };
 
-window.handleSaveUrl = function () {
+window.handleSaveUrl = async function () {
   const url = ($("#setting-url")?.value || "").trim();
-  if (url) {
-    localStorage.setItem("shivsagar_scriptUrl", url);
-    sync = new SheetSync(url);
-    syncFromSheet();
-  } else {
+  if (!url) {
     localStorage.removeItem("shivsagar_scriptUrl");
     sync = null;
+    showToast("URL removed");
+    render();
+    return;
   }
+  localStorage.setItem("shivsagar_scriptUrl", url);
+  sync = new SheetSync(url);
+  showToast("Saved! Testing connection...");
+  render();
+  try {
+    const result = await sync.load();
+    if (result.source === "sheet") {
+      showToast("\u2705 Connected and synced!");
+      if (result.data && result.data.items) {
+        state.items = result.data.items;
+        state.lastSync = new Date();
+        localStorage.setItem("shivsagar_state", JSON.stringify(result.data));
+      }
+    } else {
+      showToast("\u26A0\uFE0F Could not reach sheet. Check URL.");
+    }
+  } catch {
+    showToast("\u274C Connection failed. Check the URL.");
+  }
+  state.syncStatus = sync.isConfigured() ? "synced" : "offline";
   render();
 };
 

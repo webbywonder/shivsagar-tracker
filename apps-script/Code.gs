@@ -31,9 +31,22 @@ const SHEET_NAME = "data";
 
 function doGet(e) {
   const action = e?.parameter?.action || "read";
+
   if (action === "read") {
     return sendJson(readData());
   }
+
+  // Write via GET (workaround for Apps Script POST redirect losing body)
+  if (action === "write" && e?.parameter?.payload) {
+    try {
+      const body = JSON.parse(decodeURIComponent(e.parameter.payload));
+      writeData(body.data);
+      return sendJson({ success: true, updatedAt: new Date().toISOString() });
+    } catch (err) {
+      return sendJson({ error: err.message }, 500);
+    }
+  }
+
   return sendJson({ error: "Unknown action" }, 400);
 }
 
