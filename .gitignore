@@ -1,0 +1,5 @@
+config.local.js
+.superpowers/
+.DS_Store
+.remember/
+docs/

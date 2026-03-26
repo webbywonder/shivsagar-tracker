@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Shivsagar Interior Tracker</title>
+  <meta name="description" content="Interior design checklist tracker for Shivsagar 2BHK, Borivali West" />
+  <meta name="theme-color" content="#1c1917" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    * { -webkit-tap-highlight-color: transparent; }
+    body {
+      overscroll-behavior-y: contain;
+      -webkit-font-smoothing: antialiased;
+    }
+    #loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-family: 'DM Sans', sans-serif;
+      color: #a8a29e;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body class="bg-stone-50 font-sans">
+  <div id="app">
+    <div id="loading">Loading tracker...</div>
+  </div>
+
+  <!-- Config (gitignored, contains Apps Script URL) -->
+  <script src="config.local.js"></script>
+
+  <!-- Scripts (order matters) -->
+  <script src="js/schema.js"></script>
+  <script src="js/sheet-sync.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
