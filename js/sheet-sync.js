@@ -38,9 +38,8 @@ class SheetSync {
 
   /**
    * Save data to Google Sheet + localStorage cache.
-   * Google Apps Script redirects POST (302) — fetch follows as GET and
-   * loses the body. The workaround is to send data as a URL-encoded
-   * GET parameter instead.
+   * Google Apps Script POST via fetch works when Content-Type is text/plain
+   * and redirect is set to "follow". The response after redirect is JSON.
    * @param {object} data
    * @returns {{ success: boolean }}
    */
@@ -48,9 +47,10 @@ class SheetSync {
     localStorage.setItem(this.CACHE_KEY, JSON.stringify(data));
     localStorage.setItem(this.CACHE_TS_KEY, Date.now().toString());
     try {
-      const payload = encodeURIComponent(JSON.stringify({ action: "write", data }));
-      const url = `${this.scriptUrl}?action=write&payload=${payload}`;
-      const res = await fetch(url, { redirect: "follow" });
+      const res = await fetch(this.scriptUrl, {
+        method: "POST",
+        body: JSON.stringify({ action: "write", data }),
+      });
       const text = await res.text();
       const result = JSON.parse(text);
       if (result.error) throw new Error(result.error);

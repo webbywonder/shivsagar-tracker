@@ -595,19 +595,32 @@ window.handleSaveUrl = async function () {
   }
   localStorage.setItem("shivsagar_scriptUrl", url);
   sync = new SheetSync(url);
-  showToast("Saved! Testing connection...");
+  showToast("Saved! Connecting...");
   render();
   try {
+    // Test read first
     const result = await sync.load();
-    if (result.source === "sheet") {
-      showToast("\u2705 Connected and synced!");
-      if (result.data && result.data.items) {
-        state.items = result.data.items;
-        state.lastSync = new Date();
-        localStorage.setItem("shivsagar_state", JSON.stringify(result.data));
-      }
-    } else {
+    if (result.source !== "sheet") {
       showToast("\u26A0\uFE0F Could not reach sheet. Check URL.");
+      return;
+    }
+    // If sheet has data with items, pull it
+    if (result.data && result.data.items && result.data.items.length > 0) {
+      state.items = result.data.items;
+      state.lastSync = new Date();
+      localStorage.setItem("shivsagar_state", JSON.stringify(result.data));
+      showToast("\u2705 Connected! Pulled " + result.data.items.length + " items from sheet.");
+    } else {
+      // Sheet is empty — push current local data
+      showToast("Sheet empty. Pushing local data...");
+      const pushData = { items: state.items, userName: state.userName, updatedAt: new Date().toISOString() };
+      const writeResult = await sync.save(pushData);
+      if (writeResult.success) {
+        state.lastSync = new Date();
+        showToast("\u2705 Connected! Pushed " + state.items.length + " items to sheet.");
+      } else {
+        showToast("\u26A0\uFE0F Read works but write failed. Check Apps Script deployment.");
+      }
     }
   } catch {
     showToast("\u274C Connection failed. Check the URL.");
